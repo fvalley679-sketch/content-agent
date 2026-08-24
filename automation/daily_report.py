@@ -6,6 +6,7 @@ Runs automatically via GitHub Actions (see .github/workflows/daily-report.yml)
 import os
 import json
 import time
+import datetime
 import requests
 
 APIFY_TOKEN = os.environ["APIFY_API_TOKEN"]
@@ -18,8 +19,37 @@ ALL_HANDLES = [YOU] + COMPETITORS
 
 APIFY_ACTOR = "apify~instagram-scraper"
 
+IDEAS = [
+    {
+        "title": "Reaction-only, zero-caption post",
+        "based_on": "ahmadshahofficial1",
+        "angle": "React to a trending audio or clip with just your face + one emoji. Let the reaction carry it."
+    },
+    {
+        "title": "Drama/movie recap in your voice",
+        "based_on": "mushisamagic",
+        "angle": "Recap a trending drama/movie scene, comedy + attitude tone, but end on YOUR punchline instead of the movie's."
+    },
+    {
+        "title": "Local-flavor comedy skit",
+        "based_on": "sudaisation",
+        "angle": "A short skit built around a very local, very specific situation (something only Karachi/Lahore crowd gets)."
+    },
+    {
+        "title": "Two-line caption + attitude punchline",
+        "based_on": "thearbazarif",
+        "angle": "One bold, slightly cocky one-liner as the caption. No hashtag stuffing needed."
+    },
+    {
+        "title": "Comment-bait direct address",
+        "based_on": "sudaisation",
+        "angle": "End your caption or video with a direct instruction: tag someone, reply with an emoji, send to X kind of person."
+    }
+]
+
 
 def run_scraper():
+    """Kick off an Apify Instagram Scraper run and wait for it to finish."""
     urls = [{"url": f"https://www.instagram.com/{h}/"} for h in ALL_HANDLES]
     payload = {
         "directUrls": [u["url"] for u in urls],
@@ -67,6 +97,11 @@ def fmt(n):
     return str(n)
 
 
+def get_todays_idea():
+    day_of_year = datetime.date.today().timetuple().tm_yday
+    return IDEAS[day_of_year % len(IDEAS)]
+
+
 def send_telegram(text):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}, timeout=30)
@@ -88,9 +123,13 @@ def main():
         key=lambda x: x[1], reverse=True
     )
     leader = ranked[0][0]
+    idea = get_todays_idea()
 
     you_stats = stats.get(YOU, {})
     text = f"📊 *Daily Content Report*\n@{YOU}\n\n"
+    text += f"*Today's idea:* {idea['title']}\n"
+    text += f"_Based on @{idea['based_on']}'s top posts_\n"
+    text += f"{idea['angle']}\n\n"
     text += f"*Posts scanned:* {you_stats.get('count', 0)}\n"
     text += f"*Your avg likes:* {fmt(you_stats.get('avg_likes'))}\n"
     text += f"*Your avg comments:* {fmt(you_stats.get('avg_comments'))}\n\n"
@@ -99,7 +138,7 @@ def main():
     for h, likes in ranked:
         marker = "⭐ " if h == YOU else ""
         text += f"{marker}@{h}: {fmt(likes if likes >= 0 else None)}\n"
-    text += "\nOpen your dashboard for fresh ideas + scripts."
+    text += "\nOpen your dashboard for the full script + this idea's hook."
 
     send_telegram(text)
 
