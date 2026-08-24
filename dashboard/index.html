@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Agent Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #100E17;
+    --surface: #1B1726;
+    --surface-2: #241F33;
+    --border: #2C273B;
+    --pink: #FF3D71;
+    --yellow: #FFD23F;
+    --green: #3EDC81;
+    --text: #F4F0FF;
+    --muted: #9089AA;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    padding-bottom: 90px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 0; }
+
+  /* Header */
+  .header-eyebrow {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pink);
+    font-weight: 700;
+  }
+  .header-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .header-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .status-strip {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .status-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* Tab nav (bottom, sticky) */
+  .tabbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(16,14,23,0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    cursor: pointer;
+    flex: 1;
+  }
+  .tab-btn .icon { font-size: 18px; }
+  .tab-btn.active { color: var(--yellow); }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadein 0.25s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none; } }
+
+  h1.agent-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 14px;
+    line-height: 1.15;
+  }
+  .agent-eyebrow {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pink);
+    font-weight: 700;
+  }
+  .agent-sub { color: var(--muted); font-size: 13.5px; margin-top: 5px; }
+
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); }
+
+  /* Analyst */
+  .you-card {
+    margin-top: 16px;
+    background: linear-gradient(135deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .you-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .you-handle { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .stat-row { display: flex; gap: 10px; margin-top: 14px; }
+  .stat-box { flex: 1; background: rgba(0,0,0,0.25); border-radius: 10px; padding: 10px 12px; }
+  .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; }
+  .stat-label { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+  .comp-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
+  .comp-rank { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--muted); width: 18px; }
+  .comp-name { flex: 1; font-weight: 600; font-size: 13.5px; }
+  .comp-likes { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--yellow); font-size: 13.5px; }
+  .bar-track { height: 4px; background: var(--surface-2); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--pink), var(--yellow)); border-radius: 4px; }
+  .comp-row.you-row { border-color: var(--pink); background: rgba(255,61,113,0.08); }
+
+  .top-post { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .top-post-owner { font-size: 11.5px; color: var(--pink); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .top-post-caption { font-size: 13.5px; margin-top: 6px; line-height: 1.4; }
+  .top-post-stats { margin-top: 10px; display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); }
+
+  /* Ideator */
+  .pattern-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; font-size: 12px; margin: 0 6px 8px 0; }
+  .pattern-chip b { color: var(--yellow); font-family: 'Space Grotesk', sans-serif; }
+  .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .idea-card::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, var(--pink), var(--yellow)); }
+  .idea-num { font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em; }
+  .idea-title { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .idea-based { font-size: 11px; color: var(--pink); margin-top: 4px; font-weight: 600; }
+  .idea-why { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .idea-angle { margin-top: 10px; background: rgba(255,210,63,0.08); border: 1px solid rgba(255,210,63,0.25); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; }
+  .idea-angle b { color: var(--yellow); }
+
+  /* Hook & Script */
+  .script-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-top: 16px; }
+  .script-num { font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em; }
+  .script-idea { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-top: 4px; }
+  .hook-box { margin-top: 12px; background: rgba(255,61,113,0.1); border: 1px solid rgba(255,61,113,0.3); border-radius: 10px; padding: 10px 12px; }
+  .hook-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--pink); font-weight: 700; }
+  .hook-text { font-size: 13.5px; margin-top: 4px; font-style: italic; line-height: 1.45; }
+  .beats { margin-top: 12px; }
+  .beat-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .beat-line { font-size: 12.5px; padding: 6px 0 6px 14px; border-left: 2px solid var(--border); margin-bottom: 2px; line-height: 1.4; }
+  .caption-box { margin-top: 12px; background: rgba(255,210,63,0.08); border: 1px solid rgba(255,210,63,0.25); border-radius: 10px; padding: 10px 12px; }
+  .caption-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--yellow); font-weight: 700; }
+  .caption-text { font-size: 13.5px; margin-top: 4px; font-weight: 600; }
+
+  /* Planner */
+  .timing-note { margin-top: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .timing-note b { color: var(--yellow); }
+  .cal-row { display: flex; gap: 12px; margin-top: 14px; }
+  .cal-day { width: 58px; flex-shrink: 0; text-align: center; }
+  .cal-day-name { font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 700; color: var(--pink); }
+  .cal-day-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .cal-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .cal-slot { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--yellow); font-weight: 700; }
+  .cal-title { font-family: 'Space Grotesk', sans-serif; font-size: 14.5px; font-weight: 700; margin-top: 3px; }
+  .cal-desc { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+
+  /* DM Manager */
+  .dm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-top: 14px; }
+  .dm-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .dm-type { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; }
+  .dm-tag { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .tag-easy { background: rgba(62,220,129,0.15); color: var(--green); }
+  .tag-review { background: rgba(255,210,63,0.15); color: var(--yellow); }
+  .tag-skip { background: rgba(255,61,113,0.15); color: var(--pink); }
+  .dm-bubble { margin-top: 10px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; color: var(--muted); }
+  .dm-bubble-label { font-size: 9.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; letter-spacing: 0.06em; }
+  .dm-draft { margin-top: 8px; background: rgba(255,61,113,0.08); border: 1px solid rgba(255,61,113,0.25); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .dm-draft-label { font-size: 9.5px; text-transform: uppercase; color: var(--pink); margin-bottom: 3px; font-weight: 700; letter-spacing: 0.06em; }
+
+  /* Telegram button */
+  .tg-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    background: linear-gradient(135deg, var(--pink), #E0306A);
+    border: none;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 13px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .tg-btn:active { opacity: 0.85; }
+  .tg-btn:disabled { opacity: 0.6; }
+  .tg-status {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    min-height: 16px;
+  }
+
+  /* Regenerate button */
+  .regen-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .regen-btn:active { background: var(--border); }
+  .regen-btn:disabled { opacity: 0.6; }
+  .regen-status {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Feed (shared) */
+  .feed { margin-top: 26px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 0; }
+  .feed-title { font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 700; padding: 14px 16px 6px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(62,220,129,0.6); animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(62,220,129,0.5); } 70% { box-shadow: 0 0 0 6px rgba(62,220,129,0); } 100% { box-shadow: 0 0 0 0 rgba(62,220,129,0); } }
+  .feed-line { padding: 10px 16px; font-size: 12.5px; line-height: 1.5; border-top: 1px solid var(--border); }
+  .feed-line b { color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header-eyebrow">Content Agent Dashboard</div>
+  <div class="header-title">@talharao.475</div>
+  <div class="header-sub">5 agents, working off your real Instagram data.</div>
+  <div class="status-strip" id="status-strip"></div>
+
+  <!-- ANALYST -->
+  <div class="panel" id="panel-analyst">
+    <div class="agent-eyebrow">Analyst</div>
+    <h1 class="agent-title">Your stats vs their stats</h1>
+    <p class="agent-sub">Real numbers from real posts.</p>
+
+    <div class="you-card">
+      <div class="you-label">You</div>
+      <div class="you-handle" id="you-handle">@talharao.475</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num" id="you-posts">-</div><div class="stat-label">posts scanned</div></div>
+        <div class="stat-box"><div class="stat-num" id="you-comments">-</div><div class="stat-label">avg comments</div></div>
+        <div class="stat-box"><div class="stat-num" id="you-likes">-</div><div class="stat-label">avg likes</div></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="dot"></span>Who's getting more likes</div>
+    <div id="ranking"></div>
+
+    <div class="section-title"><span class="dot"></span>Posts that did really well</div>
+    <div id="top-posts"></div>
+
+    <div class="feed"><div class="feed-title"><span class="pulse"></span>What Analyst found</div><div id="analyst-feed"></div></div>
+  </div>
+
+  <!-- IDEATOR -->
+  <div class="panel" id="panel-ideator">
+    <div class="agent-eyebrow">Ideator</div>
+    <h1 class="agent-title">5 ideas that are already working</h1>
+    <p class="agent-sub">Not random guesses — these come from real top posts.</p>
+
+    <div class="section-title"><span class="dot"></span>What's working right now</div>
+    <div id="patterns"></div>
+
+    <div class="section-title"><span class="dot"></span>Ideas for you</div>
+    <button class="regen-btn" id="regen-ideas">🔄 Regenerate ideas</button>
+    <div class="regen-status" id="status-ideas"></div>
+    <div id="ideas"></div>
+
+    <div class="feed"><div class="feed-title"><span class="pulse"></span>What Ideator found</div><div id="ideator-feed"></div></div>
+  </div>
+
+  <!-- HOOK & SCRIPT -->
+  <div class="panel" id="panel-hookscript">
+    <div class="agent-eyebrow">Hook &amp; Script</div>
+    <h1 class="agent-title">5 hooks + scripts, ready to shoot</h1>
+    <p class="agent-sub">Made from the Ideator's ideas, ready to film.</p>
+
+    <button class="regen-btn" id="regen-scripts">🔄 Rewrite scripts</button>
+    <div class="regen-status" id="status-scripts"></div>
+    <div id="scripts"></div>
+
+    <div class="feed"><div class="feed-title"><span class="pulse"></span>What this agent wrote</div><div id="hookscript-feed"></div></div>
+  </div>
+
+  <!-- PLANNER -->
+  <div class="panel" id="panel-planner">
+    <div class="agent-eyebrow">Planner</div>
+    <h1 class="agent-title">This week, mapped out</h1>
+    <p class="agent-sub">5 posts placed on the best days to post.</p>
+
+    <div class="timing-note">Based on <b>149 posts</b> from your competitors. <b>Saturday</b>: most people post. <b>Sunday evening</b>: best results.</div>
+
+    <button class="regen-btn" id="regen-plan">🔄 Rebuild plan</button>
+    <div class="regen-status" id="status-plan"></div>
+    <div id="calendar"></div>
+
+    <div class="feed"><div class="feed-title"><span class="pulse"></span>What Planner did</div><div id="planner-feed"></div></div>
+  </div>
+
+  <!-- DM MANAGER -->
+  <div class="panel" id="panel-dmmanager">
+    <div class="agent-eyebrow">DM Manager</div>
+    <h1 class="agent-title">Your DMs, sorted and drafted</h1>
+    <p class="agent-sub">Easy ones get a ready reply. Tricky ones wait for you.</p>
+
+    <div id="dms"></div>
+
+    <div class="feed"><div class="feed-title"><span class="pulse"></span>What DM Manager did</div><div id="dm-feed"></div></div>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-panel="analyst"><span class="icon">📊</span>Analyst</button>
+  <button class="tab-btn" data-panel="ideator"><span class="icon">💡</span>Ideator</button>
+  <button class="tab-btn" data-panel="hookscript"><span class="icon">🎬</span>Script</button>
+  <button class="tab-btn" data-panel="planner"><span class="icon">🗓️</span>Planner</button>
+  <button class="tab-btn" data-panel="dmmanager"><span class="icon">💬</span>DMs</button>
+</div>
+
+<script>
+const BUNDLE = {"analyst": {"owner_handle": "talharao.475", "competitors": ["ahmadshahofficial1", "raiyanbuttt", "sudaisation", "thearbazarif", "mushisamagic"], "posts_by_account": {"raiyanbuttt": [{"caption": "Wearing chapal and eating ice-cream in this weather is crazy.... i guess👀", "hashtags": [], "likesCount": -1, "commentsCount": 14, "timestamp": "2025-12-29T08:11:15.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DS1xZ7bjY07/"}, {"caption": "Mujhy jeenay do 😭😭😭\n#boardexams #resultday #funnycontent #fyp #exammeme relatable", "hashtags": ["boardexams", "resultday", "funnycontent", "fyp", "exammeme"], "likesCount": -1, "commentsCount": 5, "timestamp": "2026-08-21T13:57:29.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcTfvOENDzz/"}, {"caption": "Day two.....", "hashtags": [], "likesCount": -1, "commentsCount": 22, "timestamp": "2026-03-22T13:17:32.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DWMCb0QjebV/"}, {"caption": "🪁بسنت بہار\n\nHoodie: @zen_attire\nAll credits to: @itzfatima_saud\n\nDisclaimer: Charkhi is just a prop.Take a chill pill<3\n\n#basant #basant2026 #cmmaryamnawaz #basantlahore #kites", "hashtags": ["basant", "basant2026", "cmmaryamnawaz", "basantlahore", "kites"], "likesCount": -1, "commentsCount": 11, "timestamp": "2026-02-06T20:33:26.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DUbhWCYDdSd/"}, {"caption": "A last day with lots of memories 🤍\n\nIt’s not goodbye, it’s see you later. The bell rang for the last time, but these memories will never end. 🩵 \n\n#lastdayofschool #farewell #friends #school #RAIYANBUT", "hashtags": ["lastdayofschool", "farewell", "friends", "school", "RAIYANBUTT", "cute", "memories", "reels", "reelsinstagram", "explore", "explorepage", "instagram", "instagood", "instadaily", "instalike", "food", "foodblogger", "foodposting"], "likesCount": -1, "commentsCount": 10, "timestamp": "2025-02-24T07:50:02.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DGcqJGits9t/"}, {"caption": "🤎 کسی شاعر کی غزل\n📸 : @say_sheikh", "hashtags": [], "likesCount": -1, "commentsCount": 46, "timestamp": "2026-07-05T15:57:20.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DaasMIQDQNJ/"}, {"caption": "🫶🏻 بکرا عید مبارک\n\nKurta: @official.alkaram", "hashtags": [], "likesCount": -1, "commentsCount": 33, "timestamp": "2026-05-27T12:13:32.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DY13k1SjRWt/"}, {"caption": "Shake peyo gy?", "hashtags": [], "likesCount": -1, "commentsCount": 34, "timestamp": "2025-11-20T08:00:00.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DRRVJKjDa6R/"}, {"caption": "Ok byeee.. \nDay 2🫶🏻", "hashtags": [], "likesCount": -1, "commentsCount": 41, "timestamp": "2025-04-01T13:29:20.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DH59lrgo6sz/"}, {"caption": "🌙عید مبارک\n\n📷: @say_sheikh 💋", "hashtags": [], "likesCount": -1, "commentsCount": 41, "timestamp": "2026-03-21T08:26:48.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DWI8Xm1DSta/"}, {"caption": "🖤🌙 عید مبارک", "hashtags": [], "likesCount": -1, "commentsCount": 39, "timestamp": "2025-03-31T04:23:33.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DH2aVY2IfO2/"}, {"caption": "🌻 ☀️", "hashtags": [], "likesCount": -1, "commentsCount": 30, "timestamp": "2025-11-18T10:32:05.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DRMc7mEjaEM/"}, {"caption": "17.", "hashtags": [], "likesCount": -1, "commentsCount": 52, "timestamp": "2025-09-05T16:55:19.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DOOl9xNjDm3/"}, {"caption": "Mein kitna aesthetic hun.....", "hashtags": [], "likesCount": -1, "commentsCount": 26, "timestamp": "2026-01-25T08:00:36.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DT7RltRjShw/"}, {"caption": "[BLUE HEART]", "hashtags": [], "likesCount": -1, "commentsCount": 47, "timestamp": "2025-10-18T09:44:41.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DP8i3SNDbjn/"}, {"caption": "Livin'", "hashtags": [], "likesCount": -1, "commentsCount": 36, "timestamp": "2025-10-02T06:50:23.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DPTCMtJja_6/"}, {"caption": "🩵🧑🏻\nAt: @xyner_cafe_sialkot", "hashtags": [], "likesCount": -1, "commentsCount": 28, "timestamp": "2025-04-26T13:49:09.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DI6Xut1oNnr/"}, {"caption": "Brother's by heart, twinning by chance 🩵🫶🏻🫂\nAt: @chaibaithakskt\n📸: @symab.arif", "hashtags": [], "likesCount": -1, "commentsCount": 27, "timestamp": "2025-05-05T19:30:06.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DJSJ50Gotq-/"}], "sudaisation": [{"caption": "Send it to your single friend 😂", "hashtags": [], "likesCount": -1, "commentsCount": 5, "timestamp": "2026-08-16T12:39:00.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcGevsjq1HS/"}, {"caption": "Something Special Is Coming to Karachi… Are You Ready? ✨\n\nGet ready for an evening full of soulful Qawwali, live performances, delicious food, and unforgettable memories. 🎤🎵🍽️✨\n\n📍 Venue: Maskan Venue,", "hashtags": ["QawwaliNight", "LiveMusic", "KarachiEvents", "liveqawwali", "musiclovers"], "likesCount": -1, "commentsCount": 11, "timestamp": "2026-07-29T16:02:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbYfc4Xq3NQ/"}, {"caption": "", "hashtags": [], "likesCount": -1, "commentsCount": 126, "timestamp": "2026-08-12T12:38:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db8LXikKAtC/"}, {"caption": "Kiu bhai karega na Shadi ?\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 45, "timestamp": "2026-07-02T12:38:34.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaSmrcAKqyh/"}, {"caption": "Maryam agayi 😂😂", "hashtags": [], "likesCount": -1, "commentsCount": 9, "timestamp": "2026-08-09T12:30:05.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db0cZOfhNK-/"}, {"caption": "Quality 00 Voice 100% 🥹❤️\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 7, "timestamp": "2026-06-12T17:30:08.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZfolWPNg82/"}, {"caption": "", "hashtags": [], "likesCount": -1, "commentsCount": 6, "timestamp": "2026-08-18T12:32:36.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcLnjKhKAO2/"}, {"caption": "1 mint Eye contact challenge\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 10, "timestamp": "2026-06-10T17:30:07.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZae8o-Nqz-/"}, {"caption": "Chimkandi Maryam 😂🤡", "hashtags": [], "likesCount": -1, "commentsCount": 4, "timestamp": "2026-07-01T15:49:48.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaQXT-gTGMq/"}, {"caption": "Starting 🤡 Ending 💀\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 274, "timestamp": "2026-08-05T12:33:36.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbqJs5Ctbs4/"}, {"caption": "Sorry Maryam 😂😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 15, "timestamp": "2026-08-10T12:34:47.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db3Bh4QKvWc/"}, {"caption": "Nangi Paon Poti😂💩\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 13, "timestamp": "2026-06-01T17:30:10.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZDT0ZSyvIq/"}, {"caption": "Premium tatti coffee😂☕\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": 50136, "commentsCount": 1463, "timestamp": "2026-05-31T17:30:11.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZAvApgNkzd/"}, {"caption": "Akhir galti kahan horahi ha😭😭💔", "hashtags": [], "likesCount": -1, "commentsCount": 19, "timestamp": "2026-06-09T15:30:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZXsdDqtp00/"}, {"caption": "Kisko karni ha Shadi phir ?\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 528, "timestamp": "2026-07-01T12:43:59.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaQCxPfK36P/"}, {"caption": "Bhai bhabhi milgayi 😂💀\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 16, "timestamp": "2026-06-02T18:41:18.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZGAgpnTo9b/"}, {"caption": "Tough competition to @talhahanjum", "hashtags": [], "likesCount": -1, "commentsCount": 29, "timestamp": "2026-08-14T09:39:26.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcBAjbeqzND/"}, {"caption": "Non pta Quaid e Azam 🌝😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 337, "timestamp": "2026-07-31T12:30:07.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbdRJjAhYwu/"}, {"caption": "Shocking Transition alert 🚨", "hashtags": [], "likesCount": -1, "commentsCount": 7, "timestamp": "2026-06-14T17:30:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZkyNDetJOp/"}, {"caption": "Alhamdullilah software update😂🤡\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 9, "timestamp": "2026-06-28T15:31:20.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaInih6qKOg/"}, {"caption": "Are you excited for this weekend ?? \n\nGet ready for an evening full of soulful Qawwali, live performances, delicious food, and unforgettable memories. 🎤🎵🍽️✨\n\n📍 Venue: Maskan Venue, Beaconhouse KG, Blo", "hashtags": [], "likesCount": -1, "commentsCount": 6, "timestamp": "2026-07-30T13:13:44.000Z", "type": "Video", "url": "https://www.instagram.com/p/Dbaw6PyqCjA/"}, {"caption": "Kung fu Chippa is back to save the world💀😂\n.\n.\n.\n.\n[chippa shaab chippa man Chippa sahab comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 13, "timestamp": "2026-06-05T17:30:10.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZNnArQtnzF/"}, {"caption": "Kya aap bhi wohi soch rahy ho 😂🤡", "hashtags": [], "likesCount": -1, "commentsCount": 17, "timestamp": "2026-06-16T17:32:20.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZp7x6SqsBn/"}, {"caption": "Finally 14 August mujra start 🌝😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 54, "timestamp": "2026-08-03T15:41:08.000Z", "type": "Video", "url": "https://www.instagram.com/p/DblTdYWK2dL/"}, {"caption": "Isko khane ky liye psnd kya ha😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 5, "timestamp": "2026-06-04T17:30:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZLCNeTtIX4/"}, {"caption": "Isko Kela do koi mun may🤡😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 12, "timestamp": "2026-06-03T21:49:04.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZI6hnCqiKA/"}, {"caption": "Chalta phirta Guldasta 😂😂\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 13, "timestamp": "2026-07-11T12:29:47.000Z", "type": "Video", "url": "https://www.instagram.com/p/DapxBHmK9K-/"}, {"caption": "Pani pene ka style thora casual ha😂🤡\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-06-03T17:30:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZIdbfGyv8j/"}, {"caption": "Comment may btaen kaisi lgrahi🥰\n.\n.\n.\n.\n[comedy fyp foryou meme funny video pakistan karachi lahore]", "hashtags": [], "likesCount": -1, "commentsCount": 20, "timestamp": "2026-06-13T17:30:13.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZiNYa9N_tL/"}, {"caption": "Please mun band karky video banaya kro🙏", "hashtags": [], "likesCount": -1, "commentsCount": 20, "timestamp": "2026-06-05T09:45:58.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZMxsXzqEX-/"}], "thearbazarif": [{"caption": "Haters will say it’s Ai", "hashtags": [], "likesCount": 8059, "commentsCount": 148, "timestamp": "2026-05-05T10:20:12.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DX9BHlRDT5q/"}, {"caption": "no storyline", "hashtags": [], "likesCount": 12745, "commentsCount": 145, "timestamp": "2026-04-24T12:32:07.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DXg7eDPFx-m/"}, {"caption": "tunay churaya meray dil ka chain, Espiderman", "hashtags": [], "likesCount": 13229, "commentsCount": 179, "timestamp": "2026-08-05T10:19:09.000Z", "type": "Image", "url": "https://www.instagram.com/p/Dbp6AwAtLWo/"}, {"caption": "you, this view + no internet = peace 🤍", "hashtags": [], "likesCount": 3303, "commentsCount": 25, "timestamp": "2025-08-27T12:35:54.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DN29HwuWLTT/"}, {"caption": "hanji bhai’on aur unki behn’o kaisa ho sab?", "hashtags": [], "likesCount": 2888, "commentsCount": 26, "timestamp": "2025-03-29T14:57:03.000Z", "type": "Image", "url": "https://www.instagram.com/p/DHyZPd6Nh5S/"}, {"caption": "life lately 🥱", "hashtags": [], "likesCount": 3973, "commentsCount": 28, "timestamp": "2025-04-29T13:13:30.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DJCCCKNtBTI/"}, {"caption": "Chaand nazar aaya? 🌙", "hashtags": [], "likesCount": 5182, "commentsCount": 58, "timestamp": "2026-03-20T14:43:31.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DWHCr4jl82e/"}, {"caption": "To the new chapter 🍻", "hashtags": [], "likesCount": 7000, "commentsCount": 57, "timestamp": "2025-09-05T10:12:11.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DON31GrjTJZ/"}, {"caption": "", "hashtags": [], "likesCount": 5590, "commentsCount": 79, "timestamp": "2025-05-27T13:08:29.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DKKHuBGNBvw/"}, {"caption": "hello!", "hashtags": [], "likesCount": 4602, "commentsCount": 31, "timestamp": "2025-12-10T13:57:19.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DSFd58gjSv9/"}, {"caption": "Peace", "hashtags": [], "likesCount": 2636, "commentsCount": 28, "timestamp": "2025-09-24T16:22:05.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DO_dQ6hDOow/"}, {"caption": "🪁", "hashtags": [], "likesCount": 10306, "commentsCount": 39, "timestamp": "2026-02-10T14:55:16.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DUlN0pSjSV4/"}, {"caption": "", "hashtags": [], "likesCount": 12966, "commentsCount": 120, "timestamp": "2026-05-16T15:33:33.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DYZ5uP-lxRz/"}], "mushisamagic": [{"caption": "Drama: Siren’s Kiss (2026)\n• Country: South Korea o:\nPo Genres: Romance, Thriller, Mystery, Psychological\n7 Release Date: March 2, 2026\nEpisodes: 12\nNetwork: tvN\nw Director: Kim Cheol-kyu\nCast:\n• Park", "hashtags": ["fyp", "viralreels", "cute", "kdramaedit", "worlwide"], "likesCount": 17, "commentsCount": 0, "timestamp": "2026-08-22T08:32:51.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVfX4GIq8_/"}, {"caption": "This clip is a darkly ironic meme compilation from a crime drama scene, not One Piece. It follows Curtis, a cocky police officer who mocks a woman during an arrest, only for the power dynamic to flip ", "hashtags": ["CrimeDrama", "ForestWhitaker", "MemeCompilation", "DarkHumor", "ViralClip"], "likesCount": 62, "commentsCount": 0, "timestamp": "2026-08-22T08:08:47.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVco5lI7bF/"}, {"caption": "This clip stitches together two very different reactions in one viral format. The first half shows a Truly documentary segment of a transgender man sharing his pregnancy journey — he poses with his ba", "hashtags": ["Truly", "TransPregnancy", "ViralReaction", "Documentary", "LGBTQ"], "likesCount": 6, "commentsCount": 0, "timestamp": "2026-08-22T07:53:26.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVa5XhImrC/"}, {"caption": "This Grey’s Anatomy clip shows the raw fallout of Addison’s infidelity on Derek Shepherd. He’s carrying a bundle of her clothes down the stairs and tossing them out the front door while she follows, c", "hashtags": ["GreysAnatomy", "DerekShepherd", "AddisonMontgomery", "TVDrama", "RelationshipDrama"], "likesCount": 50, "commentsCount": 0, "timestamp": "2026-08-22T08:12:01.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVdBFmoyyU/"}, {"caption": "This Love Next Door clip is peak “Instagram boyfriend” goals. At Seoraksan National Park, a woman asks her partner to snap a photo in front of a bear statue, only for him to pull out a high-end DSLR w", "hashtags": ["LoveNextDoor", "Kdrama", "JungHaeIn", "JungSoMin", "InstagramBoyfriend"], "likesCount": 8, "commentsCount": 0, "timestamp": "2026-08-22T07:42:18.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVZnxUogmR/"}, {"caption": "This scripted skit captures a raw cheating confrontation in a living room. Andy confronts a young woman about sleeping with another man in the room, and she initially denies it with shock. The facade ", "hashtags": ["CheatingCaught", "RelationshipDrama", "Infidelity", "SoapOperaScene", "Betrayal"], "likesCount": 34, "commentsCount": 5, "timestamp": "2026-08-22T07:18:32.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVW1q3IPJU/"}, {"caption": "Love with Flaws\nPlatform: Viki / Kocowa / Prime Video\nPlot:\nJoo Seo Yeon (Oh Yeon Seo) is a high school PE teacher with a very specific “allergy”: she absolutely detests handsome men.\nAfter growing up", "hashtags": ["lovewithflaws", "kdrama", "fyp", "explore", "viralvideos"], "likesCount": 119164, "commentsCount": 396, "timestamp": "2026-07-26T20:26:57.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbRPnx7odyC/"}, {"caption": "Tom Cruise traded action stunts for stage moves in this viral Tonight Show Lip Sync Battle, delivering a surprisingly committed performance of The Weeknd’s “Can’t Feel My Face.” The actor throws himse", "hashtags": ["TomCruise", "LipSyncBattle", "TonightShow", "JimmyFallon", "CantFeelMyFace"], "likesCount": 29, "commentsCount": 1, "timestamp": "2026-08-22T07:32:25.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVYdBeosr_/"}, {"caption": "Series Name\nMoving (Korean: 40) - Note: This scene is from the hit 2023 South Korean drama series featuring Seo Hee-won (Go Youn-jung) and Kim Hee-jae (Kim Do-hoon).\nMr Genre\nAction\nDrama\nFantasy\nRoma", "hashtags": ["Moving", "Kdrama", "GoYounJung", "KimDoHoon", "MovingKdrama"], "likesCount": 66, "commentsCount": 0, "timestamp": "2026-08-22T06:47:17.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVTTcVILm1/"}, {"caption": "Shutter (2004)\nShutter (2004) is an acclaimed Thai supernatural horror film directed by Banjong Pisanthanakun and Parkpoom Wongpoom.\nThe story follows photographer Tun and his girlfriend Jane, who fle", "hashtags": ["shutter", "instareel", "fyp", "trending", "foryou"], "likesCount": 218716, "commentsCount": 110, "timestamp": "2026-08-09T12:37:25.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db0c-Hzo29z/"}, {"caption": "This Love Next Door clip is peak “Instagram boyfriend” goals. At Seoraksan National Park, a woman asks her partner to snap a photo in front of a bear statue, only for him to pull out a high-end DSLR w", "hashtags": ["LoveNextDoor", "Kdrama", "JungHaeIn", "JungSoMin", "InstagramBoyfriend"], "likesCount": 28, "commentsCount": 0, "timestamp": "2026-08-22T07:47:18.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVaGJRoPNb/"}, {"caption": "Mr. President Didn’t Even Think Twice #relatable #southkorea\nlIlll\n#funny\nSouth Korea’s President Passed The Husband Test\nOne small market stop turned into the most wholesome viral moment. South Korea", "hashtags": ["relatable", "southkorea", "funny", "leejaemyung", "kimhyekyung"], "likesCount": 36, "commentsCount": 0, "timestamp": "2026-08-22T06:50:40.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVTuCboBnh/"}, {"caption": "This Why Did I Get Married Too? (2010) clip captures a brutal divorce mediation between Patricia, played by Janet Jackson, and Gavin, played by Malik Yoba. They agree to split $970,000 50-50 until Gav", "hashtags": ["WhyDidIGetMarriedToo", "TylerPerry", "JanetJackson", "MalikYoba", "DivorceDrama"], "likesCount": 43, "commentsCount": 0, "timestamp": "2026-08-22T07:39:26.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVZP9sodhs/"}, {"caption": "Johnny Depp and Amber Heard’s legal battle became one of the most closely followed celebrity trials in history. After marrying in 2015 and divorcing in 2017, the former couple publicly accused each ot", "hashtags": [], "likesCount": 21, "commentsCount": 0, "timestamp": "2026-08-22T06:42:37.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVSxiloy3E/"}, {"caption": "This intense For Colored Girls (2010) scene shows Jo, played by Janet Jackson, confronting her husband Carl after a gynecologist visit reveals she’s HIV-positive. She accuses him of infidelity with me", "hashtags": ["ForColoredGirls", "TylerPerry", "JanetJackson", "HIVAwareness", "MaritalBetrayal"], "likesCount": 13, "commentsCount": 0, "timestamp": "2026-08-22T07:07:21.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVVdn1IJqU/"}, {"caption": "This The Royal Tailor (2014) clip delivers a perfect moment of royal payback. Mistress So-yi arrives first at the palace gathering, expecting courtiers to bow and cement her status, but the atmosphere", "hashtags": ["TheRoyalTailor", "Kdrama", "ParkShinHye", "HistoricalDrama", "QueenEntrance"], "likesCount": 102, "commentsCount": 0, "timestamp": "2026-08-22T07:42:03.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVZexQo3jk/"}, {"caption": "This video is a melodramatic “sigma male” style edit that frames heartbreak as a stoic transformation into Batman. It opens with a man in a theater staring intensely at a couple, then follows him thro", "hashtags": ["Batman", "SigmaMale", "HeartbreakEdit", "Melodramatic", "ViralEdit"], "likesCount": 39, "commentsCount": 2, "timestamp": "2026-08-22T08:36:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVfyP0o2yX/"}, {"caption": "The scene is from the 1982 Georgian Soviet film Kukaracha, centered on a compassionate young policeman known for choosing kindness and justice over strict enforcement. In this courtroom sequence, a wo", "hashtags": ["Kukaracha", "SovietCinema", "ClassicMovie", "GeorgianFilm", "CourtroomDrama"], "likesCount": 353836, "commentsCount": 508, "timestamp": "2026-08-18T14:02:54.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcLx-cVoM6n/"}, {"caption": "This clip from Nuri Bilge Ceylan’s Clouds of May (1999) uses a simple moment to capture complex emotion.\n\nA young boy in a school uniform stands on a grassy hill beside a basket of ripe tomatoes.\n\nHe ", "hashtags": ["CloudsOfMay", "NuriBilgeCeylan", "TurkishCinema", "EmotionalMetaphor", "MovieScene"], "likesCount": 98, "commentsCount": 0, "timestamp": "2026-08-21T15:19:03.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcTpEqmoOVB/"}, {"caption": "This Martin meme clip turns a 90s sitcom moment into a relatable dating joke. Martin Payne, played by Martin Lawrence, cuts off Gina Waters, played by Tisha Campbell, at a formal event by repeatedly s", "hashtags": ["MartinSitcom", "MartinLawrence", "TishaCampbell", "90sNostalgia", "RelationshipMeme"], "likesCount": 28, "commentsCount": 0, "timestamp": "2026-08-22T07:21:44.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVXRZnoPsx/"}, {"caption": "This Love Between Lines (2026) clip delivers a gut-punch wedding twist. Hu Xiu arrives as a guest and warmly greets the bride, only to freeze when she realizes the groom is her ex-fiancé, Zhang Qiran.", "hashtags": ["LoveBetweenLines", "CDrama", "WeddingTwist", "ExFiancé", "Heartbreak"], "likesCount": 26, "commentsCount": 0, "timestamp": "2026-08-22T07:29:36.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVYGOdIxRQ/"}, {"caption": "In this Off Campus scene, Ali breaks up with Shawn on a campus pathway, expecting an emotional reaction. Instead, Shawn calmly says “Okay,” catching her off guard. He then lays out her “5-act breakup ", "hashtags": ["OffCampus", "RomanticDrama", "BreakupCycle", "RelationshipPatterns", "PrimeVideo"], "likesCount": 48, "commentsCount": 0, "timestamp": "2026-08-22T07:02:30.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVU_9LofbY/"}, {"caption": "V step into the crowd, taking in live performance at vogue world : Hollywood. known for his own standout fashion moments, he kept it effortlessly stylish in a look worthy of the runway. #vogueworld #V", "hashtags": ["vogueworld", "V", "Taehyung", "tashionmoments", "runawaystyle."], "likesCount": 27, "commentsCount": 0, "timestamp": "2026-08-21T20:43:52.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcUOLHmoCsn/"}, {"caption": "This meme from 90 Day Fiancé roasts the idea of having “hella rizz” by showing Ed Brown’s most cringeworthy flirting moments with Rose. First, he tries a poetic pool-side compliment, calling her his “", "hashtags": ["90DayFiance", "BigEd", "Rose", "Rizz", "CringeComedy"], "likesCount": 24, "commentsCount": 0, "timestamp": "2026-08-22T08:40:07.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVgPvEoaYo/"}, {"caption": "This comedy skit turns a “little miss understanding” into pure slapstick humor. Two people playfully wrestle on a bed, with one in an olive shirt and the other in a floral shirt and wig, grabbing and ", "hashtags": ["HeavenBaby", "CoupleHumor", "RelationshipComedy", "Slapstick", "PlayfulWrestle"], "likesCount": 13, "commentsCount": 0, "timestamp": "2026-08-21T20:38:53.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcUNNMBIKGY/"}, {"caption": "This anniversary video captures a painful red flag in a relationship. A woman celebrates while wearing a crown and sash, smiling as she unwraps a large gift from her partner. The mood collapses when t", "hashtags": ["ToxicRelationships", "EmotionalAbuse", "RedFlags", "BodyShaming", "RelationshipAdvice"], "likesCount": 48, "commentsCount": 2, "timestamp": "2026-08-21T15:34:59.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcTq3fTIJjI/"}, {"caption": "In this high school cafeteria scene, a girl tries to dodge an awkward conversation by pretending to be deaf when Ronnie, a friendly student in a football jersey, introduces himself and offers a school", "hashtags": ["FakeDeafFail", "CafeteriaMoment", "AwkwardHumor", "TVPilot", "SocialComedy"], "likesCount": 46, "commentsCount": 0, "timestamp": "2026-08-22T06:45:10.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVTDwbI8f5/"}, {"caption": "Animal\nA powerful action-drama that follows the intense and complicated relationship between a son and his father. Driven by love, loyalty, and a desire for acceptance, the son embarks on a violent jo", "hashtags": ["movie", "clips", "edits", "explore", "relatable"], "likesCount": 12, "commentsCount": 0, "timestamp": "2026-08-22T07:15:23.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVWh2Qon9O/"}, {"caption": "Tonight, V step into the crowd, taking in live performance at vogue world : Hollywood. known for his own standout fashion moments, he kept it effortlessly stylish in a look worthy of the runway. #vogu", "hashtags": ["vogueworld", "V", "Taehyung", "tashionmoments", "runawaystyle."], "likesCount": 17, "commentsCount": 0, "timestamp": "2026-08-21T15:18:08.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcTpAnbocCG/"}, {"caption": "Tattoo••\n\nBuried Hearts is a dark melodrama that revolves around hidden pasts, betrayal, and love tangled in revenge. The story follows a man who appears calm and composed on the outside but is driven", "hashtags": ["BuriedHearts", "parkhyungsik", "HongHwaYeon", "kdrama", "kdramaedit"], "likesCount": 13, "commentsCount": 0, "timestamp": "2026-08-22T07:43:48.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcVZymUoJ0a/"}], "ahmadshahofficial1": [{"caption": "😂 \n\n#instareels \n#reeitfeelit \n#reelsinstagram \n#reelkarofeelkaro \n#reels", "hashtags": ["instareels", "reeitfeelit", "reelsinstagram", "reelkarofeelkaro", "reels"], "likesCount": 3525398, "commentsCount": 37133, "timestamp": "2025-05-04T14:33:27.000Z", "type": "Video", "url": "https://www.instagram.com/p/DJPCw6zIAur/"}, {"caption": "😂", "hashtags": [], "likesCount": 5591, "commentsCount": 298, "timestamp": "2026-08-13T15:13:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db_Br95I97t/"}, {"caption": "😂 \n\n#reels #funny #reelkarofeelkaro", "hashtags": ["reels", "funny", "reelkarofeelkaro"], "likesCount": 5914, "commentsCount": 386, "timestamp": "2026-08-02T15:19:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbitlqxoCRX/"}, {"caption": "Thank you so much my most favourite @drnadahassan for a wonderful evening and uniting us all together. It was really amazing. The way you are spreading positivity and making people more beautiful is s", "hashtags": [], "likesCount": 10611, "commentsCount": 150, "timestamp": "2025-06-18T08:59:20.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DLCUsYpoUhZ/"}, {"caption": "😂", "hashtags": [], "likesCount": 2066, "commentsCount": 68, "timestamp": "2026-08-06T16:21:02.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbtIQJ4IY-d/"}, {"caption": "😂", "hashtags": [], "likesCount": 8398, "commentsCount": 597, "timestamp": "2026-08-18T15:49:38.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcL-AkyIAsF/"}, {"caption": "", "hashtags": [], "likesCount": 1150, "commentsCount": 32, "timestamp": "2026-08-21T16:11:52.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcTu9K6o46G/"}, {"caption": "😂", "hashtags": [], "likesCount": 2381, "commentsCount": 96, "timestamp": "2026-08-19T15:26:05.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcOfzP9IcmI/"}, {"caption": "😂 \n\n#reels #funny #bollywood #muslims", "hashtags": ["reels", "funny", "bollywood", "muslims"], "likesCount": 15874, "commentsCount": 875, "timestamp": "2026-07-31T15:47:24.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbdnY5sIhWd/"}, {"caption": "😂", "hashtags": [], "likesCount": 7618, "commentsCount": 263, "timestamp": "2026-08-04T11:22:21.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbncWW0IRhC/"}, {"caption": "😂", "hashtags": [], "likesCount": 2428, "commentsCount": 69, "timestamp": "2026-08-07T10:19:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbvDaWLInnZ/"}, {"caption": "😂", "hashtags": [], "likesCount": 6871, "commentsCount": 271, "timestamp": "2026-08-14T14:37:02.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcBie1IIHvs/"}, {"caption": "😂 @hannan.eyecon", "hashtags": [], "likesCount": 1463, "commentsCount": 49, "timestamp": "2026-08-16T14:14:46.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcGpeZRo-Lo/"}, {"caption": "😂", "hashtags": [], "likesCount": 20924, "commentsCount": 527, "timestamp": "2026-08-11T15:27:44.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db553aZIMlI/"}, {"caption": "mera pyara watan 🤍🇵🇰", "hashtags": [], "likesCount": 2220, "commentsCount": 80, "timestamp": "2026-08-13T19:02:04.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db_cRaqTL1c/"}, {"caption": "", "hashtags": [], "likesCount": 301, "commentsCount": 14, "timestamp": "2026-08-10T11:10:57.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/Db24CKviN5O/"}, {"caption": "😂", "hashtags": [], "likesCount": 7391, "commentsCount": 163, "timestamp": "2026-08-12T15:09:47.000Z", "type": "Video", "url": "https://www.instagram.com/p/Db8c0riILXZ/"}, {"caption": "Filhaal", "hashtags": [], "likesCount": 285661, "commentsCount": 2696, "timestamp": "2025-03-22T16:12:41.000Z", "type": "Video", "url": "https://www.instagram.com/p/DHggLf3oX3Q/"}, {"caption": "😂 @hannan.eyecon", "hashtags": [], "likesCount": 1096, "commentsCount": 45, "timestamp": "2026-08-17T10:56:02.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcI3zmrohZe/"}, {"caption": "😂", "hashtags": [], "likesCount": 2232, "commentsCount": 66, "timestamp": "2026-07-19T14:45:33.000Z", "type": "Video", "url": "https://www.instagram.com/p/Da-mzjSomzi/"}, {"caption": "😂 \n\n#reels \n#spiderman \n#funny", "hashtags": ["reels", "spiderman", "funny"], "likesCount": 4322, "commentsCount": 124, "timestamp": "2026-08-05T15:22:59.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbqcCproE4A/"}, {"caption": "😂", "hashtags": [], "likesCount": 9067, "commentsCount": 481, "timestamp": "2026-08-03T15:54:01.000Z", "type": "Video", "url": "https://www.instagram.com/p/DblWcwNICpD/"}, {"caption": "😂", "hashtags": [], "likesCount": 1152, "commentsCount": 46, "timestamp": "2026-07-20T15:03:38.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbBN5VeTfVc/"}, {"caption": "Happiest Birthday To Me 🥳🎉🎂", "hashtags": [], "likesCount": 1904, "commentsCount": 234, "timestamp": "2026-07-25T17:30:57.000Z", "type": "Sidecar", "url": "https://www.instagram.com/p/DbOWzW4CGJe/"}, {"caption": "😂", "hashtags": [], "likesCount": 20863, "commentsCount": 367, "timestamp": "2026-07-26T10:39:54.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbQMMW0oIgK/"}, {"caption": "😂", "hashtags": [], "likesCount": 6534, "commentsCount": 260, "timestamp": "2026-07-22T15:39:39.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbGbSU7oQQs/"}, {"caption": "😂", "hashtags": [], "likesCount": 53831, "commentsCount": 737, "timestamp": "2026-08-07T14:44:24.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbvhtSoost3/"}, {"caption": "😂", "hashtags": [], "likesCount": 4304, "commentsCount": 209, "timestamp": "2026-07-30T09:07:22.000Z", "type": "Video", "url": "https://www.instagram.com/p/DbaU5xXIK78/"}], "talharao.475": [{"caption": "😭😭😭😭🫠.\n.\n.\n.\n#viral #instagram #post #trending #emotional", "hashtags": ["viral", "instagram", "post", "trending", "emotional"], "likesCount": -1, "commentsCount": 3, "timestamp": "2026-07-12T03:25:59.000Z", "type": "Video", "url": "https://www.instagram.com/p/DarX1TUhnj0/"}, {"caption": "🤧😭.", "hashtags": [], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-08-21T14:05:30.000Z", "type": "Image", "url": "https://www.instagram.com/p/DcTeDoYshwF/"}, {"caption": "I'm not crazy about food..?\n.\n.\n.\n#post #instagram #viral #trending #funnyreels", "hashtags": ["post", "instagram", "viral", "trending", "funnyreels"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-06-29T04:00:18.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaJ9OdCMh3i/"}, {"caption": "🥰😎🫴", "hashtags": [], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-07-07T02:11:08.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaeXTvkM8hT/"}, {"caption": "😂\n.\n.\n .\n#viral #instagram #post #trending #funnyreels", "hashtags": ["viral", "instagram", "post", "trending", "funnyreels"], "likesCount": -1, "commentsCount": 4, "timestamp": "2026-08-16T16:10:09.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcG3ElyuXme/"}, {"caption": "This is the reality 😓😔\n.\n.\n#viral #instagram #post #trending #fypviralジ", "hashtags": ["viral", "instagram", "post", "trending", "fypviralジ"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-07-14T06:10:06.000Z", "type": "Video", "url": "https://www.instagram.com/p/Daw0KwYuyHd/"}, {"caption": "Itna bra sudma nhi milna chahiye tha🤧🥲.\n.\n.\n.\n#post #instagram #viral #trending", "hashtags": ["post", "instagram", "viral", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-17T02:00:59.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZq2Pn9sLv1/"}, {"caption": "\"Ghar walo ka sab se bara talent\" \n\"Ghar walu\nDesi humor\"\n#deshfamily #familyroast #relatablereels #desicomedy #funnyreels", "hashtags": ["deshfamily", "familyroast", "relatablereels", "desicomedy", "funnyreels"], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-08-20T14:30:36.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcQ-0_SOuzU/"}, {"caption": "First video that I edit by own.\n.\n.\n.\n#post #instagram #viral #trending", "hashtags": ["post", "instagram", "viral", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-14T15:35:14.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZkk_2guYmp/"}, {"caption": "I'm innocent 😇. childhood memories \n.\n.\n.\n#post #instagram #trending #viral", "hashtags": ["post", "instagram", "trending", "viral"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-18T18:11:42.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZvJ4FlsP5r/"}, {"caption": "I don't need toxic people...Just Exit from my life \n.\n.\n \n#post #viral #instagram #trending", "hashtags": ["post", "viral", "instagram", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-20T16:35:14.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZ0IloQuE0j/"}, {"caption": "Bs yaad  rkhna ye baat.\n.\n.\n.\n#viral #instagram #post #trending #friends", "hashtags": ["viral", "instagram", "post", "trending", "friends"], "likesCount": -1, "commentsCount": 10, "timestamp": "2026-08-15T13:00:48.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcD8rB_hPnU/"}, {"caption": "Aura minus ma Chala gya 🥺😅😂🤣\n.\n.\n.\n#post #viral #instagram #trending", "hashtags": ["post", "viral", "instagram", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-16T14:17:06.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZplhs7sKbZ/"}, {"caption": "I have different personalities according to my mood.\n.\n.\n.\n#viral #instagram #post #trending #attitude", "hashtags": ["viral", "instagram", "post", "trending", "attitude"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-07-19T12:26:00.000Z", "type": "Video", "url": "https://www.instagram.com/p/Da-XMgoujpF/"}, {"caption": "Bhai ab ma kia kru...?😭😭😭", "hashtags": [], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-06-09T17:45:17.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZX78gTu1hq/"}, {"caption": "Na kr yr aisy mughe sharam a rhi ha tu Mera dost ha.\n.\n.\n.\n#viral #instagram #post #trending #independenceday", "hashtags": ["viral", "instagram", "post", "trending", "independenceday"], "likesCount": -1, "commentsCount": 4, "timestamp": "2026-08-14T13:00:56.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcBX0wzuUrw/"}, {"caption": "😭😭😭.But why..?\n.\n.\n.\n.\n#post \n#instagram \n#viral \n#trending", "hashtags": ["post", "instagram", "viral", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-07T18:15:46.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZS12kruXIh/"}, {"caption": "Tag editor friend 💫.\n \n \n \n#post #instagram #viral #trending #editingvideo", "hashtags": ["post", "instagram", "viral", "trending", "editingvideo"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-17T16:40:58.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZsa9WROMe6/"}, {"caption": "Mughe nhi manzoor 🙂‍↔️\n.\n.\n.\n#viral #instagram #post #trending #funnyreels", "hashtags": ["viral", "instagram", "post", "trending", "funnyreels"], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-07-18T17:00:20.000Z", "type": "Video", "url": "https://www.instagram.com/p/Da8RyE6u6T1/"}, {"caption": "Same feelings after exams😅\n.\n.\n.\n#viral \n#post \n#instagram \n#trending", "hashtags": ["viral", "post", "instagram", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-13T19:00:11.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZiXtExO18b/"}, {"caption": "Finally,exams khatam Azaadi Mubarak sb ko.\n.\n.\n.\n#post #instagram #viral #trending", "hashtags": ["post", "instagram", "viral", "trending"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-06-13T17:50:17.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZiPpZdOO4q/"}, {"caption": "Ab hoga jashan ka intezaam 🤭", "hashtags": [], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-06-12T17:35:38.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZfpJOxu7z3/"}, {"caption": "Kia ap bhi aisa krty ho..?\n.\n.\n.\n#post #instagram #viral #trending", "hashtags": ["post", "instagram", "viral", "trending"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-12T01:00:31.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZd3WpkMmnY/"}, {"caption": "Just for fun 😁...\n.\n.\n.\n#viral #post #instagram #trending #funnyreels", "hashtags": ["viral", "post", "instagram", "trending", "funnyreels"], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-06-18T07:59:33.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZuD3xxMP5E/"}, {"caption": "Kia krty ho ghar pe..? Ye sb.🥲\n.\n.\n.\n#post \n#instagram \n#viral \n#trending \n#funnyreels", "hashtags": ["post", "instagram", "viral", "trending", "funnyreels"], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-06-28T14:25:55.000Z", "type": "Video", "url": "https://www.instagram.com/p/DaIgQU7OPhN/"}, {"caption": "Don't listen anyone's objection, You know better what's you're doing.\n.\n.\n.\n.\n#post \n#instagram \n#trending \n#viral\n#growth", "hashtags": ["post", "instagram", "trending", "viral", "growth"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-06-06T17:05:32.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZQJAWIOKPe/"}, {"caption": "Boht manhoos log hein yr🥺😓 \n.\n.\n.\n#viral #instagram #post #trending #fever", "hashtags": ["viral", "instagram", "post", "trending", "fever"], "likesCount": -1, "commentsCount": 2, "timestamp": "2026-08-19T15:45:33.000Z", "type": "Video", "url": "https://www.instagram.com/p/DcOim8gu8rq/"}, {"caption": "Bhaiyu apka bhi yehi Hal ha ya nhi..?\n.\n.\n.\n#post \n#instagram \n#viral\n#trending \n#reality", "hashtags": ["post", "instagram", "viral", "trending", "reality"], "likesCount": -1, "commentsCount": 1, "timestamp": "2026-06-11T09:16:08.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZcLOWPuMZC/"}, {"caption": "Wait till end...\n.\n.\n.\n#post #instagram #viral #trending #editingvideo", "hashtags": ["post", "instagram", "viral", "trending", "editingvideo"], "likesCount": -1, "commentsCount": 6, "timestamp": "2026-06-22T16:52:10.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZ5UDRisK-W/"}, {"caption": "I'm happy to having this but praying for more..\n.\n.\n.\n#post #instagram #trending #viral", "hashtags": ["post", "instagram", "trending", "viral"], "likesCount": -1, "commentsCount": 0, "timestamp": "2026-06-19T10:42:10.000Z", "type": "Video", "url": "https://www.instagram.com/p/DZw7UfSsERo/"}]}}, "ideas": [{"title": "Reaction-only, zero-caption post", "based_on": "ahmadshahofficial1", "why": "Their single-emoji-caption videos are pulling 15k-3.5M likes. The reaction carries it, not the caption.", "angle": "React to a trending audio or clip with just your face + one emoji."}, {"title": "Drama/movie recap in your voice", "based_on": "mushisamagic", "why": "Their recap-style posts are consistently 100k+. People watch for the payoff line.", "angle": "Recap a trending scene in your tone, but end on YOUR punchline."}, {"title": "Local-flavor comedy skit", "based_on": "sudaisation", "why": "Karachi/Lahore-tagged memes hit 50k+ likes and the highest comment rate scanned.", "angle": "A skit built around one very specific local situation."}, {"title": "Two-line caption + attitude punchline", "based_on": "thearbazarif", "why": "Short, confident captions outperform long ones across all 5 accounts.", "angle": "One bold, slightly cocky one-liner. No hashtag stuffing."}, {"title": "Comment-bait direct address", "based_on": "sudaisation", "why": "'Send it to your single friend' style captions drive shares, not just likes.", "angle": "End with a direct instruction: tag someone, reply, send to X person."}], "scripts": [{"idea": "Reaction-only, zero-caption post", "hook": "(No words. Just your face hearing the audio for the first time.)", "script": ["0-1s: Trending audio starts, you're mid-scroll.", "1-2s: Audio hits the punch — your face reacts, no acting.", "2-3s: Hard cut to black or freeze frame.", "Caption: one emoji only."], "caption": "😂"}, {"idea": "Drama/movie recap in your voice", "hook": "\"Bacho ye jo trend chal raha hai na... wo asal mein aisa nahi hai.\"", "script": ["0-3s: Hook line to camera, deadpan.", "3-15s: Fast recap of the scene, comedic exaggeration.", "15-20s: Twist it — end on YOUR punchline.", "Caption: 2 lines max, end with a line to the viewer."], "caption": "Ye scene dekh ke pata chala asli drama kaun hai. Tag that friend 👀"}, {"idea": "Local-flavor comedy skit", "hook": "\"Karachi walo, ye sirf tumhe samajh aayega.\"", "script": ["0-2s: Hook line, confident tone.", "2-12s: Skit around one specific local situation.", "12-15s: Punchline with attitude, no explanation.", "Caption: local reference + comment-bait question."], "caption": "Sirf Karachi/Lahore wale relate karenge. Prove me wrong 😤"}, {"idea": "Two-line caption + attitude punchline", "hook": "(Visual-first — no spoken hook needed.)", "script": ["0-5s: Simple visual — confident pose or expression.", "5-10s: Let the caption land the joke.", "Caption: one bold, slightly cocky one-liner."], "caption": "Haters will say it's fake confidence. It's not."}, {"idea": "Comment-bait direct address", "hook": "\"Ye us bande/bandi ke liye jo hamesha late aata hai.\"", "script": ["0-2s: Direct address hook — call out a 'type of person'.", "2-10s: Quick relatable bit around that person's habits.", "10-12s: End on direct instruction.", "Caption: direct instruction, not just a joke."], "caption": "Send this to the friend who's always 30 min late 🕐"}], "calendar": [{"day": "Monday", "time": "1:00 PM PKT", "slot": "Script 04", "title": "Two-line caption + attitude punchline", "note": "Quiet day for competitors — good for a low-effort, high-confidence post."}, {"day": "Wednesday", "time": "5:00 PM PKT", "slot": "Script 05", "title": "Comment-bait direct address", "note": "Midweek slump elsewhere — direct-address posts driving shares can cut through."}, {"day": "Friday", "time": "8:00 PM PKT", "slot": "Script 01", "title": "Reaction-only, zero-caption post", "note": "Friday evening engagement climbs — pure reaction content travels fast."}, {"day": "Saturday", "time": "1:00 PM PKT", "slot": "Script 03", "title": "Local-flavor comedy skit", "note": "Busiest posting day for everyone — but also highest avg engagement."}, {"day": "Sunday", "time": "8:00 PM PKT", "slot": "Script 02", "title": "Drama/movie recap in your voice", "note": "Highest average engagement of the week — save your strongest script for it."}], "dms": [{"type": "Fan message", "example": "bro your reels are actually so funny 😂😂 keep going", "draft": "haha shukriya yaar 🙏 aur aane wale hain, dekhte rehna", "tag": "Reply — easy"}, {"type": "Collab / brand DM", "example": "Hi! We'd love to collaborate with you on a paid post for our clothing brand.", "draft": "Hey, thanks for reaching out! Send over the details (deliverables + budget) and I'll take a look.", "tag": "Needs your review"}, {"type": "Troll / hate comment", "example": "this isn't even funny bro delete this", "draft": "(No reply drafted — trolls get ignored. Flagged for you to mute/block if it continues.)", "tag": "Skip — don't engage"}, {"type": "Repeat fan / regular", "example": "you always post the best content fr", "draft": "you're too kind yaar, appreciate you showing up every time 🙌", "tag": "Reply — easy"}, {"type": "Business inquiry", "example": "What are your rates for a sponsored reel?", "draft": "Hey! I'll send over my rate card shortly. Are you thinking one-off or a monthly package?", "tag": "Needs your review"}]};
+
+// Tab switching
+const tabs = document.querySelectorAll('.tab-btn');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabs.forEach(b => b.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+document.getElementById('panel-analyst').classList.add('active');
+
+// Status strip
+const statusEl = document.getElementById('status-strip');
+['Analyst', 'Ideator', 'Hook & Script', 'Planner', 'DM Manager'].forEach(name => {
+  const chip = document.createElement('div');
+  chip.className = 'status-chip';
+  chip.innerHTML = `<span class="status-dot"></span>${name}`;
+  statusEl.appendChild(chip);
+});
+
+function fmt(n) {
+  if (n === null || n === undefined) return 'hidden';
+  if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'k';
+  return String(n);
+}
+
+/* ---------- ANALYST ---------- */
+(function() {
+  const RAW = BUNDLE.analyst;
+  const accounts = RAW.posts_by_account;
+  const you = RAW.owner_handle;
+
+  function computeAccountStats(posts) {
+    const validLikes = posts.map(p => p.likesCount).filter(v => v >= 0);
+    const validComments = posts.map(p => p.commentsCount).filter(v => v >= 0);
+    const avgLikes = validLikes.length ? Math.round(validLikes.reduce((a,b)=>a+b,0)/validLikes.length) : null;
+    const avgComments = validComments.length ? Math.round(validComments.reduce((a,b)=>a+b,0)/validComments.length) : null;
+    return { count: posts.length, avgLikes, avgComments, hiddenLikes: validLikes.length === 0 };
+  }
+
+  const youStats = computeAccountStats(accounts[you]);
+  document.getElementById('you-handle').textContent = '@' + you;
+  document.getElementById('you-posts').textContent = youStats.count;
+  document.getElementById('you-comments').textContent = fmt(youStats.avgComments);
+  document.getElementById('you-likes').textContent = fmt(youStats.avgLikes);
+
+  const allStats = Object.keys(accounts).map(owner => {
+    const s = computeAccountStats(accounts[owner]);
+    return { owner, ...s, isYou: owner === you };
+  });
+  allStats.sort((a,b) => (b.avgLikes===null?-1:b.avgLikes) - (a.avgLikes===null?-1:a.avgLikes));
+  const maxLikes = Math.max(...allStats.map(a => a.avgLikes || 0));
+
+  const rankingEl = document.getElementById('ranking');
+  allStats.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'comp-row' + (s.isYou ? ' you-row' : '');
+    const pct = s.avgLikes ? Math.max(6, Math.round((s.avgLikes / maxLikes) * 100)) : 4;
+    row.innerHTML = `<div style="flex:1"><div style="display:flex;align-items:center;gap:10px;"><div class="comp-rank">#${i+1}</div><div class="comp-name">${s.isYou?'⭐ ':''}@${s.owner}</div><div class="comp-likes">${fmt(s.avgLikes)}</div></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+    rankingEl.appendChild(row);
+  });
+
+  let allPosts = [];
+  Object.keys(accounts).forEach(owner => {
+    if (owner === you) return;
+    accounts[owner].forEach(p => { if (p.likesCount >= 0) allPosts.push({ owner, ...p }); });
+  });
+  allPosts.sort((a,b) => b.likesCount - a.likesCount);
+  const top3 = allPosts.slice(0,3);
+  const topPostsEl = document.getElementById('top-posts');
+  top3.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'top-post';
+    const caption = (p.caption||'').replace(/\n/g,' ').slice(0,110);
+    div.innerHTML = `<div class="top-post-owner">@${p.owner}</div><div class="top-post-caption">${caption}${p.caption.length>110?'…':''}</div><div class="top-post-stats"><span>❤️ ${fmt(p.likesCount)}</span><span>💬 ${fmt(p.commentsCount)}</span></div>`;
+    topPostsEl.appendChild(div);
+  });
+
+  const leader = allStats[0];
+  const feedEl = document.getElementById('analyst-feed');
+  const lines = [];
+  lines.push(`Scanned <b>${allStats.reduce((a,s)=>a+s.count,0)}</b> posts across ${allStats.length} accounts.`);
+  lines.push(`<b>@${leader.owner}</b> leads at ${fmt(leader.avgLikes)} avg likes/post.`);
+  if (youStats.hiddenLikes) lines.push(`Your likes are hidden on Instagram — comments (${fmt(youStats.avgComments)} avg) are the closest signal I have.`);
+  if (top3.length) lines.push(`Top post right now: @${top3[0].owner}, ${fmt(top3[0].likesCount)} likes. Worth studying.`);
+  lines.forEach(l => { const d=document.createElement('div'); d.className='feed-line'; d.innerHTML=l; feedEl.appendChild(d); });
+})();
+
+/* ---------- SHARED STATE ---------- */
+const STATE = { ideas: BUNDLE.ideas, scripts: BUNDLE.scripts, calendar: BUNDLE.calendar };
+
+/* ---------- ANTHROPIC API HELPER ---------- */
+async function callClaude(systemPrompt, userPrompt) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content.map(b => b.text || "").join("\n");
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+/* ---------- IDEATOR ---------- */
+function renderPatterns() {
+  const patternsEl = document.getElementById('patterns');
+  patternsEl.innerHTML = '';
+  [
+    { label: 'Short captions', detail: 'beat long ones on every account' },
+    { label: 'Direct address', detail: '"tag your friend" style drives shares' },
+    { label: 'Recap format', detail: 'consistently 100k+' },
+    { label: 'Local references', detail: 'highest comment rate' },
+  ].forEach(p => { const c=document.createElement('div'); c.className='pattern-chip'; c.innerHTML=`<b>${p.label}</b> ${p.detail}`; patternsEl.appendChild(c); });
+}
+
+function renderIdeas(ideas) {
+  const ideasEl = document.getElementById('ideas');
+  ideasEl.innerHTML = '';
+  ideas.forEach((idea, i) => {
+    const card = document.createElement('div');
+    card.className = 'idea-card';
+    card.innerHTML = `<div class="idea-num">IDEA ${String(i+1).padStart(2,'0')}</div><div class="idea-title">${idea.title}</div><div class="idea-based">Based on @${idea.based_on}'s top posts</div><div class="idea-why">${idea.why}</div><div class="idea-angle"><b>Your angle:</b> ${idea.angle}</div>`;
+    ideasEl.appendChild(card);
+  });
+}
+
+function renderIdeatorFeed(lines) {
+  const feedEl = document.getElementById('ideator-feed');
+  feedEl.innerHTML = '';
+  lines.forEach(l => { const d=document.createElement('div'); d.className='feed-line'; d.innerHTML=l; feedEl.appendChild(d); });
+}
+
+function getTopPostsContext() {
+  const accounts = BUNDLE.analyst.posts_by_account;
+  const you = BUNDLE.analyst.owner_handle;
+  let allPosts = [];
+  Object.keys(accounts).forEach(owner => {
+    if (owner === you) return;
+    accounts[owner].forEach(p => { if (p.likesCount >= 0) allPosts.push({ owner, caption: (p.caption||'').slice(0,150), hashtags: p.hashtags, likes: p.likesCount, comments: p.commentsCount, type: p.type }); });
+  });
+  allPosts.sort((a,b) => b.likes - a.likes);
+  return allPosts.slice(0, 20);
+}
+
+async function generateIdeas() {
+  const btn = document.getElementById('regen-ideas');
+  const status = document.getElementById('status-ideas');
+  btn.disabled = true;
+  status.textContent = 'Thinking through your competitors\' top posts...';
+  try {
+    const topPosts = getTopPostsContext();
+    const result = await callClaude(
+      "You are a sharp social media strategist for a Pakistani comedy + attitude reels creator on Instagram. You will be given real top-performing posts from competitors in the same niche. Generate 5 fresh, specific, non-generic content ideas the creator can actually film this week. Ground every idea in something concrete from the data (an actual pattern, format, or caption style you can point to). Respond with ONLY a raw JSON array, no markdown fences, no preamble. Each item must have exactly these keys: title (short, punchy), based_on (a competitor handle from the data), why (1-2 sentences, cite something specific from the data), angle (one concrete, filmable action).",
+      `Here are the top 20 competitor posts (owner, caption, hashtags, likes, comments, type):\n${JSON.stringify(topPosts)}\n\nGenerate 5 ideas now.`
+    );
+    STATE.ideas = result;
+    renderIdeas(result);
+    renderIdeatorFeed([
+      'Pulled fresh ideas straight from your competitors\' current top posts.',
+      `Grounded in real data — not the same 5 as before.`,
+      'Sent to Hook & Script — hit "Rewrite scripts" there to match these.',
+    ]);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = 'Live regenerate only works when opened via Claude in Chrome.';
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+renderPatterns();
+renderIdeas(STATE.ideas);
+renderIdeatorFeed([
+  'Scanned top posts across 5 competitor accounts for repeatable patterns.',
+  "<b>@ahmadshahofficial1</b> proves you don't need a caption to go viral — the reaction does the work.",
+  'Comment-bait captions are driving replies harder than plain jokes.',
+  'Sent 5 ideas to the Hook & Script agent.',
+]);
+document.getElementById('regen-ideas').addEventListener('click', generateIdeas);
+
+/* ---------- HOOK & SCRIPT ---------- */
+function renderScripts(scripts) {
+  const scriptsEl = document.getElementById('scripts');
+  scriptsEl.innerHTML = '';
+  scripts.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'script-card';
+    const beatsHtml = s.script.map(b => `<div class="beat-line">${b}</div>`).join('');
+    card.innerHTML = `<div class="script-num">SCRIPT ${String(i+1).padStart(2,'0')}</div><div class="script-idea">${s.idea}</div><div class="hook-box"><div class="hook-label">Hook (first 3 sec)</div><div class="hook-text">${s.hook}</div></div><div class="beats"><div class="beat-label">Step by step</div>${beatsHtml}</div><div class="caption-box"><div class="caption-label">Caption</div><div class="caption-text">${s.caption}</div></div>`;
+    scriptsEl.appendChild(card);
+  });
+}
+
+function renderHookScriptFeed(lines) {
+  const feedEl = document.getElementById('hookscript-feed');
+  feedEl.innerHTML = '';
+  lines.forEach(l => { const d=document.createElement('div'); d.className='feed-line'; d.innerHTML=l; feedEl.appendChild(d); });
+}
+
+async function generateScripts() {
+  const btn = document.getElementById('regen-scripts');
+  const status = document.getElementById('status-scripts');
+  btn.disabled = true;
+  status.textContent = 'Writing hooks and scripts for your current ideas...';
+  try {
+    const result = await callClaude(
+      "You are writing short-form video hooks and scripts for a Pakistani comedy + attitude Instagram reels creator. You write in the creator's real voice — a natural mix of Roman Urdu and English (Urdu-English code-switching), confident, funny, never stiff or corporate. You will be given a list of content ideas. For each idea, write: a 3-second-or-shorter hook (spoken line or visual direction), a beat-by-beat script (3-4 short steps with rough timestamps), and a short caption. Respond with ONLY a raw JSON array, no markdown fences, no preamble. Each item must have exactly these keys: idea (copy the title exactly), hook (string), script (array of 3-4 short strings), caption (string).",
+      `Ideas to write scripts for:\n${JSON.stringify(STATE.ideas)}`
+    );
+    STATE.scripts = result;
+    renderScripts(result);
+    renderHookScriptFeed([
+      'Wrote fresh hooks and scripts matching your current ideas.',
+      'Kept hooks under 3 seconds and captions short, on purpose.',
+      'Hit "Rebuild plan" on Planner to slot these into your week.',
+    ]);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = 'Live regenerate only works when opened via Claude in Chrome.';
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+renderScripts(STATE.scripts);
+renderHookScriptFeed([
+  'Turned all 5 Ideator picks into shootable scripts.',
+  "Kept hooks under 3 seconds — matches what's converting in your niche right now.",
+  'Captions kept short on purpose — long captions are underperforming everywhere scanned.',
+  'Sending to Planner to slot into your calendar.',
+]);
+document.getElementById('regen-scripts').addEventListener('click', generateScripts);
+
+/* ---------- PLANNER ---------- */
+function renderCalendar(cal) {
+  const calEl = document.getElementById('calendar');
+  calEl.innerHTML = '';
+  cal.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'cal-row';
+    row.innerHTML = `<div class="cal-day"><div class="cal-day-name">${c.day.slice(0,3).toUpperCase()}</div><div class="cal-day-time">${c.time}</div></div><div class="cal-card"><div class="cal-slot">${c.slot}</div><div class="cal-title">${c.title}</div><div class="cal-desc">${c.note}</div></div>`;
+    calEl.appendChild(row);
+  });
+}
+
+function renderPlannerFeed(lines) {
+  const feedEl = document.getElementById('planner-feed');
+  feedEl.innerHTML = '';
+  lines.forEach(l => { const d=document.createElement('div'); d.className='feed-line'; d.innerHTML=l; feedEl.appendChild(d); });
+}
+
+function getTimingStats() {
+  const accounts = BUNDLE.analyst.posts_by_account;
+  const you = BUNDLE.analyst.owner_handle;
+  const dayStats = {};
+  Object.keys(accounts).forEach(owner => {
+    if (owner === you) return;
+    accounts[owner].forEach(p => {
+      if (!p.timestamp) return;
+      const d = new Date(p.timestamp);
+      const day = d.toLocaleDateString('en-US', { weekday: 'long' });
+      if (!dayStats[day]) dayStats[day] = { count: 0, likes: 0 };
+      dayStats[day].count += 1;
+      if (p.likesCount >= 0) dayStats[day].likes += p.likesCount;
+    });
+  });
+  return dayStats;
+}
+
+async function generatePlan() {
+  const btn = document.getElementById('regen-plan');
+  const status = document.getElementById('status-plan');
+  btn.disabled = true;
+  status.textContent = 'Slotting your scripts into the week...';
+  try {
+    const timing = getTimingStats();
+    const result = await callClaude(
+      "You are a content planner for a Pakistani comedy + attitude Instagram creator. You will be given a list of video scripts and real posting-time data from competitors (day of week -> post count and total likes). Build a 5-day posting calendar, one script per day, choosing which script goes on which day based on the timing data (save the strongest script for the highest-engagement day). Use Pakistan Standard Time (PKT) for times. Respond with ONLY a raw JSON array, no markdown fences, no preamble. Each item must have exactly these keys: day (full weekday name), time (e.g. '8:00 PM PKT'), slot (e.g. 'Script 01'), title (copy the script's idea title), note (1 short sentence explaining the placement using the timing data).",
+      `Scripts to schedule:\n${JSON.stringify(STATE.scripts)}\n\nCompetitor posting-time data (day -> {count, total likes}):\n${JSON.stringify(timing)}`
+    );
+    STATE.calendar = result;
+    renderCalendar(result);
+    renderPlannerFeed([
+      'Rebuilt the week around your current scripts.',
+      'Placement based on real competitor posting-time data.',
+      'Calendar updated — ready when you are.',
+    ]);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = 'Live regenerate only works when opened via Claude in Chrome.';
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+renderCalendar(STATE.calendar);
+renderPlannerFeed([
+  'Mapped all 5 scripts from Hook & Script onto the week.',
+  'Held your strongest script (drama recap) for <b>Sunday</b> — the highest-engagement slot found.',
+  'Spread posts across 5 separate days instead of stacking them.',
+  'Calendar sent to dashboard.',
+]);
+document.getElementById('regen-plan').addEventListener('click', generatePlan);
+
+/* ---------- DM MANAGER ---------- */
+(function() {
+  const tagClass = { "Reply — easy": "tag-easy", "Needs your review": "tag-review", "Skip — don't engage": "tag-skip" };
+  const dmsEl = document.getElementById('dms');
+  BUNDLE.dms.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'dm-card';
+    card.innerHTML = `<div class="dm-top"><div class="dm-type">${d.type}</div><div class="dm-tag ${tagClass[d.tag]||''}">${d.tag}</div></div><div class="dm-bubble"><div class="dm-bubble-label">They said</div>"${d.example}"</div><div class="dm-draft"><div class="dm-draft-label">Draft reply</div>${d.draft}</div>`;
+    dmsEl.appendChild(card);
+  });
+
+  const feedEl = document.getElementById('dm-feed');
+  [
+    'Sorted DMs into 3 types: easy replies, needs-your-review, and skip.',
+    'Drafted replies for fan messages so you can send with one tap.',
+    'Flagged brand and business DMs — money conversations always wait for you.',
+    "Trolls get no reply. That's on purpose.",
+  ].forEach(l => { const d=document.createElement('div'); d.className='feed-line'; d.innerHTML=l; feedEl.appendChild(d); });
+})();
+</script>
+</body>
+</html>
