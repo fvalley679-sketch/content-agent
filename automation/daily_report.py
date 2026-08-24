@@ -131,9 +131,17 @@ def get_todays_script():
     return SCRIPTS[day_of_year % len(SCRIPTS)]
 
 
-def send_telegram(text):
+DASHBOARD_URL = "https://fvalley679-sketch.github.io/content-agent/"
+
+
+def send_telegram(text, with_dashboard_button=False):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    requests.post(url, json={"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}, timeout=30)
+    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}
+    if with_dashboard_button:
+        payload["reply_markup"] = {
+            "inline_keyboard": [[{"text": "📊 Open Dashboard", "url": DASHBOARD_URL}]]
+        }
+    requests.post(url, json=payload, timeout=30)
 
 
 def main():
@@ -164,7 +172,7 @@ def main():
     for step in script["steps"]:
         script_text += f"- {step}\n"
     script_text += f"\n*Caption:*\n{script['caption']}"
-    send_telegram(script_text)
+    send_telegram(script_text, with_dashboard_button=True)
 
     stats_text = f"📊 *Daily Content Report*\n@{YOU}\n\n"
     stats_text += f"*Posts scanned:* {you_stats.get('count', 0)}\n"
