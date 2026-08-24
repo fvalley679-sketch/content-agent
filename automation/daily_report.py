@@ -19,31 +19,60 @@ ALL_HANDLES = [YOU] + COMPETITORS
 
 APIFY_ACTOR = "apify~instagram-scraper"
 
-IDEAS = [
+SCRIPTS = [
     {
         "title": "Reaction-only, zero-caption post",
         "based_on": "ahmadshahofficial1",
-        "angle": "React to a trending audio or clip with just your face + one emoji. Let the reaction carry it."
+        "hook": "(No words. Just your face hearing the audio for the first time.)",
+        "steps": [
+            "0-1s: Trending audio starts, you're mid-scroll, unaware.",
+            "1-2s: Audio hits the punch moment, your face reacts, no acting, just real.",
+            "2-3s: Hard cut to black or freeze frame on your reaction."
+        ],
+        "caption": "😂"
     },
     {
         "title": "Drama/movie recap in your voice",
         "based_on": "mushisamagic",
-        "angle": "Recap a trending drama/movie scene, comedy + attitude tone, but end on YOUR punchline instead of the movie's."
+        "hook": "Bacho ye jo trend chal raha hai na... wo asal mein aisa nahi hai.",
+        "steps": [
+            "0-3s: Hook line to camera, deadpan attitude.",
+            "3-15s: Fast recap of the trending scene/plot in your words, comedic exaggeration.",
+            "15-20s: Twist it, end on YOUR punchline, not the original's."
+        ],
+        "caption": "Ye scene dekh ke pata chala asli drama kaun hai. Tag that friend 👀"
     },
     {
         "title": "Local-flavor comedy skit",
         "based_on": "sudaisation",
-        "angle": "A short skit built around a very local, very specific situation (something only Karachi/Lahore crowd gets)."
+        "hook": "Karachi walo, ye sirf tumhe samajh aayega.",
+        "steps": [
+            "0-2s: Hook line, direct to camera, confident tone.",
+            "2-12s: Skit built around one very specific local situation (traffic, rickshaw, chai stall, etc).",
+            "12-15s: Punchline delivered with attitude, not explanation."
+        ],
+        "caption": "Sirf Karachi/Lahore wale relate karenge. Prove me wrong 😤"
     },
     {
         "title": "Two-line caption + attitude punchline",
         "based_on": "thearbazarif",
-        "angle": "One bold, slightly cocky one-liner as the caption. No hashtag stuffing needed."
+        "hook": "(Visual-first, no spoken hook needed, caption does the talking.)",
+        "steps": [
+            "0-5s: Simple visual, you, confident pose or expression, no explanation.",
+            "5-10s: Nothing more needed. Let the caption land the joke."
+        ],
+        "caption": "Haters will say it's fake confidence. It's not."
     },
     {
         "title": "Comment-bait direct address",
         "based_on": "sudaisation",
-        "angle": "End your caption or video with a direct instruction: tag someone, reply with an emoji, send to X kind of person."
+        "hook": "Ye us bande/bandi ke liye jo hamesha late aata hai.",
+        "steps": [
+            "0-2s: Direct address hook, call out a 'type of person'.",
+            "2-10s: Quick relatable bit built around that person's habits.",
+            "10-12s: End on direct instruction to viewer."
+        ],
+        "caption": "Send this to the friend who's always 30 min late 🕐"
     }
 ]
 
@@ -97,9 +126,9 @@ def fmt(n):
     return str(n)
 
 
-def get_todays_idea():
+def get_todays_script():
     day_of_year = datetime.date.today().timetuple().tm_yday
-    return IDEAS[day_of_year % len(IDEAS)]
+    return SCRIPTS[day_of_year % len(SCRIPTS)]
 
 
 def send_telegram(text):
@@ -123,24 +152,30 @@ def main():
         key=lambda x: x[1], reverse=True
     )
     leader = ranked[0][0]
-    idea = get_todays_idea()
+    script = get_todays_script()
 
     you_stats = stats.get(YOU, {})
-    text = f"📊 *Daily Content Report*\n@{YOU}\n\n"
-    text += f"*Today's idea:* {idea['title']}\n"
-    text += f"_Based on @{idea['based_on']}'s top posts_\n"
-    text += f"{idea['angle']}\n\n"
-    text += f"*Posts scanned:* {you_stats.get('count', 0)}\n"
-    text += f"*Your avg likes:* {fmt(you_stats.get('avg_likes'))}\n"
-    text += f"*Your avg comments:* {fmt(you_stats.get('avg_comments'))}\n\n"
-    text += f"*Leader right now:* @{leader} ({fmt(dict(ranked)[leader])} avg likes)\n\n"
-    text += "Rankings:\n"
+
+    script_text = f"🎬 *Today's Script*\n\n"
+    script_text += f"*{script['title']}*\n"
+    script_text += f"_Based on @{script['based_on']}'s top posts_\n\n"
+    script_text += f"*Hook (first 3 sec):*\n{script['hook']}\n\n"
+    script_text += f"*Steps:*\n"
+    for step in script["steps"]:
+        script_text += f"- {step}\n"
+    script_text += f"\n*Caption:*\n{script['caption']}"
+    send_telegram(script_text)
+
+    stats_text = f"📊 *Daily Content Report*\n@{YOU}\n\n"
+    stats_text += f"*Posts scanned:* {you_stats.get('count', 0)}\n"
+    stats_text += f"*Your avg likes:* {fmt(you_stats.get('avg_likes'))}\n"
+    stats_text += f"*Your avg comments:* {fmt(you_stats.get('avg_comments'))}\n\n"
+    stats_text += f"*Leader right now:* @{leader} ({fmt(dict(ranked)[leader])} avg likes)\n\n"
+    stats_text += "Rankings:\n"
     for h, likes in ranked:
         marker = "⭐ " if h == YOU else ""
-        text += f"{marker}@{h}: {fmt(likes if likes >= 0 else None)}\n"
-    text += "\nOpen your dashboard for the full script + this idea's hook."
-
-    send_telegram(text)
+        stats_text += f"{marker}@{h}: {fmt(likes if likes >= 0 else None)}\n"
+    send_telegram(stats_text)
 
     with open("dashboard/data.json", "w", encoding="utf-8") as f:
         json.dump({"owner_handle": YOU, "competitors": COMPETITORS, "posts_by_account": posts_by_account}, f, ensure_ascii=False)
