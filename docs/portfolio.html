@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Commerce & Business Support</title>
+<style>
+  :root {
+    --ink: #1c2b24;
+    --paper: #f6f4ee;
+    --paper-dim: #ece8dc;
+    --brass: #a9843c;
+    --brass-deep: #7c5f28;
+    --rule: #cfc7ab;
+    --green-deep: #16241d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 1.6;
+  }
+
+  .sans {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  a { color: inherit; }
+
+  /* ---------- HEADER / LEDGER MASTHEAD ---------- */
+  header {
+    background: var(--green-deep);
+    color: var(--paper);
+    padding: 4rem 1.5rem 3rem;
+    text-align: center;
+    border-bottom: 6px double var(--brass);
+  }
+
+  header .eyebrow {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--brass);
+    margin-bottom: 1rem;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  header p.tagline {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin-top: 0.8rem;
+    font-size: 1rem;
+    color: #d8d2bd;
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ---------- SECTION WRAPPER ---------- */
+  section {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem;
+  }
+
+  section + section {
+    border-top: 1px solid var(--rule);
+  }
+
+  h2.ledger-head {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  h2.ledger-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about-text {
+    font-size: 1.08rem;
+  }
+
+  /* ---------- LEDGER TABLE (SKILLS) ---------- */
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .ledger tr {
+    border-bottom: 1px dashed var(--rule);
+  }
+
+  .ledger tr:last-child { border-bottom: none; }
+
+  .ledger td {
+    padding: 0.9rem 0.4rem;
+    font-size: 0.95rem;
+  }
+
+  .ledger td.item {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .ledger td.detail {
+    color: #4a4a42;
+    text-align: right;
+  }
+
+  /* ---------- EXPERIENCE ENTRY ---------- */
+  .entry {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .entry::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--brass);
+  }
+
+  .entry .role {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .entry .meta {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+    color: var(--brass-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0.15rem 0 0.5rem;
+  }
+
+  /* ---------- CONTACT / STAMP ---------- */
+  .contact-box {
+    text-align: center;
+    padding: 3rem 1.5rem 4rem;
+  }
+
+  .stamp {
+    display: inline-block;
+    border: 2px solid var(--brass);
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0 auto 1.5rem;
+    transform: rotate(-6deg);
+  }
+
+  .contact-links {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1rem;
+    margin-top: 1rem;
+  }
+
+  .contact-links a {
+    display: inline-block;
+    margin: 0.4rem 0.8rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--brass);
+    padding-bottom: 2px;
+  }
+
+  footer {
+    text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    color: #8a8672;
+    padding: 1.5rem;
+    background: var(--paper-dim);
+  }
+
+  @media (max-width: 480px) {
+    header { padding: 3rem 1rem 2.5rem; }
+    section { padding: 2.5rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Business Administration · Commerce</div>
+  <h1>Your Name Here</h1>
+  <p class="tagline">Detail-focused support for small businesses — bookkeeping, data entry, and admin work, backed by a commerce background and hands-on customer service experience.</p>
+</header>
+
+<section id="about">
+  <h2 class="ledger-head">About</h2>
+  <p class="about-text">
+    I recently completed my Intermediate in Commerce and am currently pursuing admission into an Associate Degree in Business Administration (ADP). Alongside my studies, I bring six months of hands-on experience as a cashier, where I handled cash reconciliation, customer transactions, and day-to-day front-desk operations. I'm looking to apply my commerce foundation and attention to detail toward freelance bookkeeping, data entry, and virtual assistant work.
+  </p>
+</section>
+
+<section id="skills">
+  <h2 class="ledger-head">Skills</h2>
+  <table class="ledger">
+    <tr>
+      <td class="item">Cash Handling & Reconciliation</td>
+      <td class="detail">6 months, hands-on</td>
+    </tr>
+    <tr>
+      <td class="item">Customer Service</td>
+      <td class="detail">Daily front-desk operations</td>
+    </tr>
+    <tr>
+      <td class="item">MS Excel / Google Sheets</td>
+      <td class="detail">Basic formulas, invoicing, tracking</td>
+    </tr>
+    <tr>
+      <td class="item">Data Entry</td>
+      <td class="detail">Accurate, organized records</td>
+    </tr>
+    <tr>
+      <td class="item">Commerce Fundamentals</td>
+      <td class="detail">Accounting, business studies</td>
+    </tr>
+  </table>
+</section>
+
+<section id="experience">
+  <h2 class="ledger-head">Experience</h2>
+  <div class="entry">
+    <div class="role">Cashier</div>
+    <div class="meta">Pizza Café · 6 Months</div>
+    <p>Managed daily cash transactions, balanced registers at shift close, and handled customer orders and queries in a fast-paced environment.</p>
+  </div>
+  <div class="entry">
+    <div class="role">Intermediate in Commerce</div>
+    <div class="meta">Completed</div>
+    <p>Studied core commerce subjects including accounting, business studies, and economics — building the foundation for further studies in business administration.</p>
+  </div>
+  <div class="entry">
+    <div class="role">ADP — Business Administration</div>
+    <div class="meta">Admission in progress</div>
+    <p>Currently applying for an Associate Degree in Business Administration, with future plans toward ACCA or a role in banking.</p>
+  </div>
+</section>
+
+<section class="contact-box" id="contact">
+  <h2 class="ledger-head" style="justify-content:center;">Get in Touch</h2>
+  <div class="stamp">Open for<br>Work</div>
+  <p>Available for freelance bookkeeping, data entry, and admin support.</p>
+  <div class="contact-links">
+    <a href="mailto:youremail@example.com">Email</a>
+    <a href="https://wa.me/923000000000">WhatsApp</a>
+    <a href="#">LinkedIn</a>
+  </div>
+</section>
+
+<footer>
+  &copy; 2026 Your Name. Built for freelance & client outreach.
+</footer>
+
+</body>
+</html>
